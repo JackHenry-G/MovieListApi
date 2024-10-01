@@ -1,5 +1,18 @@
-# Maven
+# Ignore Maven target directory
 target/
+
+# Ignore Maven Wrapper files (optional)
+mvnw
+mvnw.cmd
+
+# Ignore IDE specific files
+.idea/
+.vscode/
+
+# Ignore OS specific files
+.DS_Store
+
+# Ignore log files and other build artifacts
 *.log
 *.jar
 *.war
@@ -7,17 +20,13 @@ target/
 *.class
 *.zip
 *.tar.gz
-*.tar
 *.tgz
 *.swp
 
-# IDE specific
-.idea/
-*.iml
-*.ipr
-*.iws
+# Ignore Docker files if you want to keep local changes private
+# Comment out the next lines if you want to track them
+# Dockerfile
+# docker-compose.yml
 
-# Maven Wrapper
-mvnw
-mvnw.cmd
-**/mvnw*
+# Ignore other potentially sensitive files
+*.iml
