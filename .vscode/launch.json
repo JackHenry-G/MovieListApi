@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-MovielistApplication<movielist>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.goggin.movielist.MovielistApplication",
+      "projectName": "movielist",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

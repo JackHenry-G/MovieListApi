@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database container
+  psql-db:
+    image: postgres
+    container_name: psql-db
+    restart: always # if container fails, start up again. Ensures data is always accessible
+    environment: # application.properties will pick this up
+      - POSTGRES_USER=movielover
+      - POSTGRES_PASSWORD=testpwd
+      - POSTGRES_DB=movielist
+    ports:
+      - "5432:5432"
