@@ -1,2 +1,23 @@
-# Project exclude paths
-/target/
+# Maven
+target/
+*.log
+*.jar
+*.war
+*.ear
+*.class
+*.zip
+*.tar.gz
+*.tar
+*.tgz
+*.swp
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Maven Wrapper
+mvnw
+mvnw.cmd
+**/mvnw*
