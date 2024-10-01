@@ -32,7 +32,7 @@ A demo application of this has been deployed @ (IN PROGRESS)
   - HTML
   - CSS
   - JavaScript
-  - Thymeleaf
+  - REACT
 
 - **Database:**
 
