@@ -2,8 +2,6 @@ package com.goggin.movielist.service;
 
 import com.goggin.movielist.model.Genre;
 import com.goggin.movielist.respositories.GenreRepository;
-import com.goggin.movielist.respositories.MovieConnectionRepository;
-import com.goggin.movielist.respositories.MovieRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

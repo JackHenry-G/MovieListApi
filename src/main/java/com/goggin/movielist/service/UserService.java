@@ -6,10 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.goggin.movielist.controller.MoviesController;
 import com.goggin.movielist.exception.NoLoggedInUserException;
 import com.goggin.movielist.model.Genre;
-import com.goggin.movielist.model.Movie;
 import com.goggin.movielist.model.MovieConnection;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

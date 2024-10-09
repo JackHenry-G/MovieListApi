@@ -71,14 +71,11 @@ public class Movie {
     }
 
     public void setBackdrop_path(String backdrop_path) {
-        // e.g. https://image.tmdb.org/t/p/w500//vQGo5VjJcHxpzIa8lMBFzpAth1w.jpg
-        String tmdbUrl = "https://image.tmdb.org/t/p/w500" + backdrop_path;
-        this.backdrop_path = tmdbUrl;
+        this.backdrop_path = "https://image.tmdb.org/t/p/w500" + backdrop_path;;
     }
 
     public void setPoster_path(String poster_path) {
-        String tmdbUrl = "https://image.tmdb.org/t/p/w500" + poster_path;
-        this.poster_path = tmdbUrl;
+        this.poster_path = "https://image.tmdb.org/t/p/w500" + poster_path;;
     }
 
 }
