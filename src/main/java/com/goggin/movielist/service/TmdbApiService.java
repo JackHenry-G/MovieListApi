@@ -43,10 +43,13 @@ public class TmdbApiService {
         return getMoviesFromTmdb("/search/movie", null, requestParams);
     }
 
-    public List<TmdbResponseResult> getMoviesFromTmdbByYear(String year) {
-        Map<String, String> requestParams = Collections.singletonMap("primary_release_year", year);
+    public List<TmdbResponseResult> getMoviesFromTmdbByParam(Map<String, String> requestParams) {
+        if (requestParams == null) {
+            throw new IllegalArgumentException("Request parameters must be provided");
+        }
         return getMoviesFromTmdb("/discover/movie", null, requestParams);
     }
+
 
     public Movie getMovieDetailsFromTmdbById(Integer tmdbMovieId) throws MovieNotFoundInTmdbException {
         String url = buildUrl("/movie", Integer.toString(tmdbMovieId), null);

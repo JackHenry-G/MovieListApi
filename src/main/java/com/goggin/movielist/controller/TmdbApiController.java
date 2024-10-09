@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/tmdb/search")
@@ -40,20 +41,22 @@ public class TmdbApiController {
         }
     }
 
-    @GetMapping("/moviesByReleaseYear")
-    public ResponseEntity<?> searchTmdbForMoviesByReleaseYear(@RequestParam String releaseYear) {
-        log.info("Query request param (release year) = {}", releaseYear);
+    @GetMapping("/moviesByParams")
+    public ResponseEntity<?> searchForTmdbMoviesByParams(@RequestParam Map<String, String> params) {
+        log.info("Query request params = {}", params);
 
         try {
-            List<TmdbResponseResult> movies = tmdbApiService.getMoviesFromTmdbByYear(releaseYear);
-            if (movies != null) {
+            // Pass the dynamic parameters to the service
+            List<TmdbResponseResult> movies = tmdbApiService.getMoviesFromTmdbByParam(params);
+
+            if (movies != null && !movies.isEmpty()) {
                 return new ResponseEntity<>(movies, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT); // or HttpStatus.NOT_FOUND
             }
         } catch (Exception e) {
-            log.error("Issue with search for a movie from TMDB by a release year: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body("Issue with search for a movie from TMDB by a release year: " + e.getMessage());
+            log.error("Issue with search for movies from TMDB: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("Issue with search for movies from TMDB: " + e.getMessage());
         }
     }
 

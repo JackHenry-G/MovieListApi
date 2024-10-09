@@ -1,5 +1,6 @@
 package com.goggin.movielist.controller;
 
+import com.goggin.movielist.exception.GenresNotFoundException;
 import com.goggin.movielist.exception.MovieAlreadySavedToUsersListException;
 import com.goggin.movielist.exception.NoLoggedInUserException;
 import org.springframework.web.bind.annotation.*;
@@ -58,13 +59,15 @@ public class MoviesController {
     public ResponseEntity<?> addMovieToList(@RequestParam Integer tmdbMovieId, @RequestParam double rating) {
         try {
             Movie tmdbMovie = tmdbApiService.getMovieDetailsFromTmdbById(tmdbMovieId);
-            log.info("Movie added to user: {}", tmdbMovie.toString());
+            log.info("Successfully retrieved movie details from tmdb: {}", tmdbMovie.toString());
 
             Movie usersListMovie = movieService.addMovieToUsersList(userService.getCurrentUser(), tmdbMovie,
                     rating);
+            log.info("Added it to movie's list: {}", usersListMovie.toString());
 
             // must update profile for movie suggestion functions
             userService.updateUserFavourites();
+            log.info("Successfully updated their favourites");
 
             return ResponseEntity.ok(usersListMovie.getTitle() + " added to your list!");
         } catch (NoLoggedInUserException e) {
@@ -73,6 +76,9 @@ public class MoviesController {
         } catch (MovieAlreadySavedToUsersListException e) {
             log.error("This movie already existed in the user's movie list and should not be added again: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).body("This movie already exists in your list!: ");
+        } catch (GenresNotFoundException e) {
+            log.error("Genres were not able to be serialized for the movie");
+            return ResponseEntity.internalServerError().body("There was an issue with retrieving the movie: " + e.getMessage());
         } catch (Exception e) {
             log.error("Issue with adding a movie to your list: {}", e.getMessage());
             return ResponseEntity.internalServerError().body("Issue with adding a movie to your list: " + e.getMessage());
@@ -108,6 +114,7 @@ public class MoviesController {
                     .orElseThrow(() -> new RuntimeException("MovieConnection not found"));
 
             movieConnectionService.deleteMovieConnectionById(movieConnection.getMovie_connection_id());
+            log.info("Successfully movie removal of: {}", movieToDeleteFromUsersList);
 
             return ResponseEntity.ok(movieToDeleteFromUsersList.getTitle() + " - has been removed from your list!");
         } catch (Exception e) {

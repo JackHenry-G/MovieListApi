@@ -2,6 +2,7 @@ package com.goggin.movielist.controller;
 
 import com.goggin.movielist.config.JwtResponse;
 import com.goggin.movielist.config.JwtUtils;
+import com.goggin.movielist.exception.GenresNotFoundException;
 import com.goggin.movielist.exception.MovieAlreadySavedToUsersListException;
 import com.goggin.movielist.exception.NoLoggedInUserException;
 import jakarta.validation.Valid;
@@ -18,10 +19,16 @@ import org.springframework.web.bind.annotation.*;
 import com.goggin.movielist.exception.UsernameAlreadyExistsException;
 import com.goggin.movielist.model.Movie;
 import com.goggin.movielist.model.User;
+import com.goggin.movielist.model.Genre;
 import com.goggin.movielist.service.MovieService;
 import com.goggin.movielist.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -84,6 +91,9 @@ public class AuthController {
         } catch (MovieAlreadySavedToUsersListException e) {
             log.error("This method already existed in the user's movie list: {}", e.getMessage());
             return ResponseEntity.internalServerError().body("This movie already exists in your list so cannot be added again: " + e.getMessage());
+        } catch (GenresNotFoundException e) {
+            log.error("Genres were not able to be serialized for the movie");
+            return ResponseEntity.internalServerError().body("There was an issue with retrieving the movie: " + e.getMessage());
         } catch (Exception e) {
             log.error("Issue signing up test user: {}", e.getMessage());
             return ResponseEntity.internalServerError().body("Issue with server: " + e.getMessage());
@@ -103,9 +113,16 @@ public class AuthController {
             userService.saveNewUser(user);
 
             // save default movie to the database so user has one in place already
+            Genre genre1 = new Genre(35, "Comedy");
+            Genre genre2 = new Genre(18, "Romance");
+            Genre genre3 = new Genre(18, "Musical");
+            HashSet<Genre> genres = new HashSet<>(Arrays.asList(genre1, genre2, genre3));
             Movie initialMovie = new Movie(230423, "La La Land", "2016-02-09", 128, "Ryan Gosling is the man",
-                    "Romance", "/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg", "/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
-                    "Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician, scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain in each other threaten to rip them apart.");
+                    "/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg", "/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
+                    "Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician," +
+                            " scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions " +
+                            "that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain " +
+                            "in each other threaten to rip them apart.", genres);
             movieService.addMovieToUsersList(user, initialMovie, 8);
 
             log.info("User {} successfully signed up.", user.getUsername());
@@ -114,8 +131,11 @@ public class AuthController {
             log.error("User already signed up!");
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (MovieAlreadySavedToUsersListException e) {
-                log.error("This method already existed in the user's movie list: {}", e.getMessage());
-                return ResponseEntity.internalServerError().body("This movie already exists in your list so cannot be added again: " + e.getMessage());
+            log.error("This method already existed in the user's movie list: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("This movie already exists in your list so cannot be added again: " + e.getMessage());
+        } catch (GenresNotFoundException e) {
+            log.error("Genres were not able to be serialized for the movie");
+            return ResponseEntity.internalServerError().body("There was an issue with retrieving the movie: " + e.getMessage());
         } catch (Exception e) {
             log.error("Issue signing up user: {}", e.getMessage());
             return ResponseEntity.internalServerError().body("Issue signing up user: " + e.getMessage());
@@ -178,37 +198,40 @@ public class AuthController {
         }
     }
 
-    private User buildandSaveTestUser() throws UsernameAlreadyExistsException, MovieAlreadySavedToUsersListException {
+    private User buildandSaveTestUser() throws UsernameAlreadyExistsException, MovieAlreadySavedToUsersListException, GenresNotFoundException {
         User testUser = new User(1, "jackhenryg@hotmail.co.uk", "test", "pwd", 51.5074, -0.1278);
         userService.saveNewUser(testUser);
         log.info("Test user registered: {}", testUser);
 
         // save default movie to the database (need to change this all around)
+        Genre genre1 = new Genre(35, "Comedy");
+        Genre genre2 = new Genre(18, "Romance");
+        Genre genre3 = new Genre(18, "Musical");
+        HashSet<Genre> genres = new HashSet<>(Arrays.asList(genre1, genre2, genre3));
         Movie laLaLand = new Movie(230423, "La La Land", "2016-02-09", 128, "Ryan Gosling is the man",
-                "Romance", "/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg", "/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
-                "Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician, scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain in each other threaten to rip them apart.");
+                "/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg", "/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
+                "Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician," +
+                        " scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions " +
+                        "that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain " +
+                        "in each other threaten to rip them apart.", genres);
+
+        Genre actionGenre = new Genre(28, "Action");
+        HashSet<Genre> hgGenres = new HashSet<>(List.of(actionGenre));
         Movie hungerGames = new Movie(230426, "Hunger Games", "2010-10-02", 128,
-                "May the odds be ever in your favour", "Action", "/yDbyVT8tTOgXUrUXNkHEUqbxb1K.jpg",
+                "May the odds be ever in your favour", "/yDbyVT8tTOgXUrUXNkHEUqbxb1K.jpg",
                 "/yXCbOiVDCxO71zI7cuwBRXdftq8.jpg",
-                "Every year in the ruins of what was once North America, the nation of Panem forces each of its twelve districts to send a teenage boy and girl to compete in the Hunger Games.  Part twisted entertainment, part government intimidation tactic, the Hunger Games are a nationally televised event in which “Tributes” must fight with one another until one survivor remains.  Pitted against highly-trained Tributes who have prepared for these Games their entire lives, Katniss is forced to rely upon her sharp instincts as well as the mentorship of drunken former victor Haymitch Abernathy.  If she’s ever to return home to District 12, Katniss must make impossible choices in the arena that weigh survival against humanity and life against love. The world will be watching.");
-        Movie goodfellas = new Movie(230493, "Goodfellas", "2000-10-01", 128, "Mobb bosses", "Crime",
-                "/sw7mordbZxgITU877yTpZCud90M.jpg", "/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg",
-                "The true story of Henry Hill, a half-Irish, half-Sicilian Brooklyn kid who is adopted by neighbourhood gangsters at an early age and climbs the ranks of a Mafia family under the guidance of Jimmy Conway.");
-        Movie wonka = new Movie(230432, "Wonka", "2023-12-06", 117,
-                "Every good thing in this world started with a dream.", "Crime",
-                "/yOm993lsJyPmBodlYjgpPwBjXP9.jpg", "/qhb1qOilapbapxWQn9jtRCMwXJF.jpg",
-                "Willy Wonka – chock-full of ideas and determined to change the world one delectable bite at a time – is proof that the best things in life begin with a dream, and if you’re lucky enough to meet Willy Wonka, anything is possible.");
-        Movie wish = new Movie(230478, "Wish", "2023-12-03", 95, "Be careful what you wish for.",
-                "Fantasy",
-                "/ehumsuIBbgAe1hg343oszCLrAfI.jpg", "/AcoVfiv1rrWOmAdpnAMnM56ki19.jpg",
-                "Asha, a sharp-witted idealist, makes a wish so powerful that it is answered by a cosmic force – a little ball of boundless energy called Star. Together, Asha and Star confront a most formidable foe - the ruler of Rosas, King Magnifico - to save her community and prove that when the will of one courageous human connects with the magic of the stars, wondrous things can happen.");
+                "Every year in the ruins of what was once North America, the nation of Panem forces each of its twelve" +
+                        " districts to send a teenage boy and girl to compete in the Hunger Games.  " +
+                        "Part twisted entertainment, part government intimidation tactic, the Hunger Games are a " +
+                        "nationally televised event in which “Tributes” must fight with one another until one survivor " +
+                        "remains.  Pitted against highly-trained Tributes who have prepared for these Games their" +
+                        " entire lives, Katniss is forced to rely upon her sharp instincts as well as the mentorship " +
+                        "of drunken former victor Haymitch Abernathy.  If she’s ever to return home to District 12, " +
+                        "Katniss must make impossible choices in the arena that weigh survival against humanity and " +
+                        "life against love. The world will be watching.", hgGenres);
 
         movieService.addMovieToUsersList(testUser, laLaLand, 8);
         movieService.addMovieToUsersList(testUser, hungerGames, 8.9);
-        // fav films
-        movieService.addMovieToUsersList(testUser, goodfellas, 9.4); // not at cinema
-        movieService.addMovieToUsersList(testUser, wonka, 9.1); // at cinema
-        movieService.addMovieToUsersList(testUser, wish, 9.3); // at cinema
         log.info("Movies added to test user successfully");
 
         return testUser;

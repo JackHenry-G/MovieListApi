@@ -1,11 +1,11 @@
 package com.goggin.movielist.service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.goggin.movielist.exception.GenresNotFoundException;
 import com.goggin.movielist.exception.MovieAlreadySavedToUsersListException;
+import com.goggin.movielist.model.Genre;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.goggin.movielist.model.Movie;
@@ -20,21 +20,36 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final MovieConnectionRepository movieConnectionRepository;
     private final MovieConnectionService movieConnectionService;
+    private final GenreService genreService;
 
     public MovieService(MovieRepository movieRepository, MovieConnectionRepository movieConnectionRepository,
-            MovieConnectionService movieConnectionService) {
+                        MovieConnectionService movieConnectionService, GenreService genreService) {
         this.movieRepository = movieRepository;
         this.movieConnectionRepository = movieConnectionRepository;
         this.movieConnectionService = movieConnectionService;
+        this.genreService = genreService;
     }
 
     // CREATE operations ---------------
-    public Movie addMovieToUsersList(User user, Movie movie, double rating) throws MovieAlreadySavedToUsersListException {
+    public Movie addMovieToUsersList(User user, Movie movie, double rating) throws MovieAlreadySavedToUsersListException, GenresNotFoundException {
         log.info("Attempting to add '{}' with rating of {} to {}'s list.", movie.getTitle(), rating, user.getUsername());
 
         // Retrieve the movie from the database, or add it if it doesn't exist
         Movie dbMovie = this.movieRepository.findByTitle(movie.getTitle());
         if (dbMovie == null) {
+
+            Set<Genre> movie_genres = movie.getGenres();
+            if (movie_genres != null && !movie_genres.isEmpty()) {
+                Set<Genre> dbGenres = new HashSet<>();
+                for (Genre genre : movie_genres) {
+                    Genre dbGenre = genreService.findOrCreateGenre(genre);
+                    dbGenres.add(dbGenre);
+                }
+                movie.setGenres(dbGenres);
+            } else {
+                throw new GenresNotFoundException("No genres were found for this movie");
+            }
+
             dbMovie = this.movieRepository.save(movie);
             log.info("Movie '{}' was not found in the database. Adding it.", movie.getTitle());
         } else {

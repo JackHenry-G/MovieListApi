@@ -1,25 +1,17 @@
 package com.goggin.movielist.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "movies")
-@ToString // use Lombok to generate a ToString method without having to write it ourselves
 @Data
 @NoArgsConstructor
 public class Movie {
@@ -42,8 +34,6 @@ public class Movie {
     private Integer runtime; // e.g. 157, (Minutes)
     private String tagline; // e.g. "Everyone hungers for something."
 
-    private String genre; // returned by TMDB
-
     private String backdrop_path; // image backdrop URL
     private String poster_path; // image post URL
 
@@ -55,17 +45,25 @@ public class Movie {
     @JsonIgnore
     private Set<MovieConnection> userRatings;
 
-    public Movie(Integer movie_id, String title, String releaseYear, Integer runtime, String tagline, String genre,
-            String backdrop_path, String poster_path, String overview) {
+    @ManyToMany
+    @JoinTable(
+            name = "movie_genres",
+            joinColumns = @JoinColumn(name = "movie_movie_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    private Set<Genre> genres = new HashSet<>();
+
+    public Movie(Integer movie_id, String title, String releaseYear, Integer runtime, String tagline,
+            String backdrop_path, String poster_path, String overview, HashSet<Genre> genres) {
         this.movie_id = movie_id;
         this.title = title;
         this.releaseYear = releaseYear.substring(0, 4);
         this.runtime = runtime;
         this.tagline = tagline;
-        this.genre = genre;
         this.backdrop_path = "https://image.tmdb.org/t/p/w500" + backdrop_path;
         this.poster_path = "https://image.tmdb.org/t/p/w500" + poster_path;
         this.overview = overview;
+        this.genres = genres;
     }
 
     public void setReleaseYear(String releaseYear) {

@@ -2,14 +2,8 @@ package com.goggin.movielist.model;
 
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import lombok.*;
 
 @Entity
@@ -33,6 +27,9 @@ public class User {
     private double longitude;
 
     private String favouriteReleaseYear;
+
+    @ManyToOne
+    private Genre favouriteGenre;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<MovieConnection> favouriteMovies;

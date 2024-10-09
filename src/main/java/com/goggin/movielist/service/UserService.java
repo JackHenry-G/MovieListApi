@@ -3,9 +3,13 @@ package com.goggin.movielist.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.goggin.movielist.controller.MoviesController;
 import com.goggin.movielist.exception.NoLoggedInUserException;
+import com.goggin.movielist.model.Genre;
+import com.goggin.movielist.model.Movie;
 import com.goggin.movielist.model.MovieConnection;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,6 +68,13 @@ public class UserService implements UserDetailsService {
             log.info("Updated user's favourite release year to '{}'.", newFavouriteReleaseYear);
         }
 
+        // update favouriteGenre if provided
+        Genre newFavouriteGenre = updatedUser.getFavouriteGenre();
+        if (newFavouriteGenre != null && newFavouriteGenre.getId() != null && newFavouriteGenre.getName() != null && !newFavouriteGenre.getName().isEmpty()) {
+            currentUser.setFavouriteGenre(newFavouriteGenre);
+            log.info("Favourite genre updated to {}", newFavouriteGenre);
+        }
+
         // Save changes to database
         userRepository.save(currentUser);
         log.info("User updates saved successfully in the database.");
@@ -104,30 +115,56 @@ public class UserService implements UserDetailsService {
     }
 
     public void updateUserFavourites() throws NoLoggedInUserException, UsernameAlreadyExistsException {
-        // find all movies
+        // Find all movies for the current user
         List<MovieConnection> movies = movieService.getMovieConnectionsByUsernameInRatingOrder(getCurrentUser().getUsername());
 
         if (movies.isEmpty()) {
+            log.warn("No movies found for the user.");
             return;
         }
 
-        // count how many movies are saved to the profile by release year { "1990" : 2, "1991" : 4, "1992" : 8 }
-        Map<String, Long> releaseYearCount = movies.stream()
-                .map(movieConnection -> movieConnection.getMovie().getReleaseYear())
-                .collect(Collectors.groupingBy(year -> year, Collectors.counting()));
+        log.info("Movies found for user: {}", movies.stream()
+                .map(movieConnection -> movieConnection.getMovie().getGenres())
+                .collect(Collectors.toList()));
 
-        // return the most popular year
-        String favouriteYear = releaseYearCount.entrySet().stream()
-                .max(Map.Entry.comparingByValue()) // finds the map entry with highest value
-                .map(Map.Entry::getKey) // gets teh key of that entry
-                .orElse(null); // TODO: better handle null (throw error?)
+        // Calculate favourite genre and release year
+        Genre favouriteGenre = findMostPopularGenre(movies);
+        String favouriteYear = findMostPopularReleaseYear(movies)
+                .orElseThrow(() -> new IllegalArgumentException("No release year found for user's movies"));
 
-        if (favouriteYear != null && !favouriteYear.isBlank()) {
-            User updatedUser = new User();
-            updatedUser.setFavouriteReleaseYear(favouriteYear);
-            updateUser(updatedUser);
-        }
+
+        User updatedUser = new User();
+        updatedUser.setFavouriteReleaseYear(favouriteYear);
+        updatedUser.setFavouriteGenre(favouriteGenre);
+        updateUser(updatedUser);
+
+        log.info("Updated user favourites: Genre - {}, Year - {}", favouriteGenre.getName(), favouriteYear);
     }
+
+    private Genre findMostPopularGenre(List<MovieConnection> movies) {
+        List<Genre> allGenres = movies.stream()
+                .flatMap(movieConnection -> movieConnection.getMovie().getGenres().stream())
+                .toList();
+
+        return allGenres.stream()
+                .collect(Collectors.groupingBy(genre -> genre, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null); // Handle null appropriately if necessary
+    }
+
+    private Optional<String> findMostPopularReleaseYear(List<MovieConnection> movies) {
+        return movies.stream()
+                .map(movieConnection -> movieConnection.getMovie().getReleaseYear())
+                .collect(Collectors.groupingBy(year -> year, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
