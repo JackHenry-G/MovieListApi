@@ -50,6 +50,11 @@ public class TmdbApiService {
         return getMoviesFromTmdb("/discover/movie", null, requestParams);
     }
 
+    public List<TmdbResponseResult> getPopularMovies() {
+        return getMoviesFromTmdb("/movie/popular", null, null);
+    }
+
+
 
     public Movie getMovieDetailsFromTmdbById(Integer tmdbMovieId) throws MovieNotFoundInTmdbException {
         String url = buildUrl("/movie", Integer.toString(tmdbMovieId), null);

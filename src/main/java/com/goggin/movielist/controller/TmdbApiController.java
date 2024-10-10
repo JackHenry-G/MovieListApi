@@ -55,7 +55,26 @@ public class TmdbApiController {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT); // or HttpStatus.NOT_FOUND
             }
         } catch (Exception e) {
-            log.error("Issue with search for movies from TMDB: {}", e.getMessage());
+            log.error("Issue with discover for movies from TMDB: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("Issue with search for movies from TMDB: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/popular-movies")
+    public ResponseEntity<?> getPopularTmdbMovies() {
+        log.info("Getting popular movies");
+
+        try {
+            // Pass the dynamic parameters to the service
+            List<TmdbResponseResult> movies = tmdbApiService.getPopularMovies();
+
+            if (movies != null && !movies.isEmpty()) {
+                return new ResponseEntity<>(movies, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT); // or HttpStatus.NOT_FOUND
+            }
+        } catch (Exception e) {
+            log.error("Issue with search for popular movies from TMDB: {}", e.getMessage());
             return ResponseEntity.internalServerError().body("Issue with search for movies from TMDB: " + e.getMessage());
         }
     }
