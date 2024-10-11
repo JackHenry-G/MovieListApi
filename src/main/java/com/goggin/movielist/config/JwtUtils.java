@@ -7,6 +7,7 @@ import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -24,14 +25,19 @@ public class JwtUtils {
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
-    public String generateJwtToken(Authentication authentication) {
-        log.info("Generating JWT Token...");
-        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-        log.info("User principal: {}", userPrincipal);
+    public String generateJwtToken(String loggedInUsername) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        if (loggedInUsername == null || loggedInUsername.isEmpty()) {
+            UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+            loggedInUsername = userPrincipal.getUsername();
+            log.info("Username retrieved from auth object: {}", loggedInUsername);
+        } else {
+            log.info("Using username passed in: {}", loggedInUsername);
+        }
 
         return Jwts.builder()
-                .setSubject((userPrincipal.getUsername()))
+                .setSubject((loggedInUsername))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)

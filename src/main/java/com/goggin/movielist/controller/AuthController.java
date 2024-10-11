@@ -61,8 +61,8 @@ public class AuthController {
                     .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // generate and return JWT token
-            String jwt = jwtUtils.generateJwtToken(authentication);
+            // generate and return new JWT token
+            String jwt = jwtUtils.generateJwtToken(null);
             User user = userService.getCurrentUser();
 
             log.info("User {} has successfully logged in and JWT token generated.", user.getUsername());
@@ -165,35 +165,25 @@ public class AuthController {
     }
 
     @PostMapping("/profile/edit")
-    public ResponseEntity<?> editProfile(@ModelAttribute User user, BindingResult bindingResult) {
+    public ResponseEntity<?> editProfile(@ModelAttribute User newUser, BindingResult bindingResult) {
+        log.info("Updating user profile to: {}", newUser);
+
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body("Validation error: " + bindingResult.getAllErrors().get(0).getDefaultMessage());
         }
 
         try {
-            log.info("Attempting to update with {}", user);
-            userService.updateUser(user);
+            // Update the username
+            newUser = userService.updateUser(newUser);
 
-            log.info("User edited successfully: {}", user);
+            // refresh JWT token for new username
+            String jwt = jwtUtils.generateJwtToken(newUser.getUsername());
 
-            // Get the current authentication
-            Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-
-            // Generate a new JWT token using the current authentication
-            String jwt = jwtUtils.generateJwtToken(currentAuth);
-
-            // Return the new JWT token along with a success message and user details
-            return ResponseEntity
-                    .ok(new JwtResponse(jwt, user.getUser_id(), user.getUsername(), user.getEmail()));
-        } catch (NoLoggedInUserException e) {
-            log.error("Attempted to update a profile without a logged in user: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body("Attempted to update a profile without a logged in user: {}: " + e.getMessage());
-        } catch (UsernameAlreadyExistsException e) {
-            log.error("User edit UsernameAlreadyExistsException: {}", e.getMessage());
-            return ResponseEntity.badRequest().body("Username already exists.");
+            log.info("User {} has successfully updated their profile and JWT token generated.", newUser);
+            return ResponseEntity.ok(new JwtResponse(jwt, newUser.getUser_id(), newUser.getUsername(), newUser.getEmail()));
         } catch (Exception e) {
-            log.error("Issue updating user due to unexpected error: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body("Issue getting user profile: " + e.getMessage());
+            log.error("Issue updating user profile: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("Issue updating user profile: " + e.getMessage());
         }
     }
 

@@ -52,7 +52,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public void updateUser(User updatedUser) throws UsernameAlreadyExistsException, NoLoggedInUserException {
+    public User updateUser(User updatedUser) throws UsernameAlreadyExistsException, NoLoggedInUserException {
         User currentUser = getCurrentUser();
         log.info("Update user called for user: {}", currentUser);
 
@@ -74,8 +74,7 @@ public class UserService implements UserDetailsService {
         }
 
         // Save changes to database
-        userRepository.save(currentUser);
-        log.info("User updates saved successfully in the database.");
+        return userRepository.save(currentUser);
     }
 
     private void updateUsername(User currentUser, String newUsername) throws UsernameAlreadyExistsException {
